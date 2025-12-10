@@ -2,6 +2,17 @@
     import { VISTAS, vistaActual, jugadorActivo, sonidoActivo, BACKEND_URL } from './estado.js';
     import { onMount, onDestroy } from 'svelte';
 
+
+    // rutas imagenes
+    const RUTA_MANZANA_BUENA = '/manzana-roja.png'; 
+    const RUTA_MANZANA_PODRIDA = '/manzana.png';
+    const RUTA_CANASTA = '/canasta.png'; 
+    
+    // Objetos Image para Canvas
+    let imgCanasta;
+    let imgManzanaBuena;
+    let imgManzanaPodrida;
+
     // Variables de estado del juego
     let puntuacion = 0;
     let tiempo = 0;
@@ -26,6 +37,43 @@
     let items = [];
     let timerInterval;
 
+    // modificaciones para implementar niveles -k
+
+    // probabilidad de que aparezca un ítem en un fotograma dado.
+    // Base 0.05 (5%) y sube hasta 0.2 (20%).
+    function getProbabilidadAparicion() {
+        // La dificultad máxima se alcanza después de 90 segundos
+        const maxTiempo = 90; 
+        const minProb = 0.005; // Al inicio, solo 0.5% de probabilidad por frame
+        const maxProb = 0.05; // Máximo 5% de probabilidad por frame 
+
+        if (tiempo >= maxTiempo) {
+            return maxProb;
+        }
+        
+        return minProb + (maxProb - minProb) * (tiempo / maxTiempo);
+    }
+    
+    // probabilidad de que el ítem sea una trampa (manzana podrida)
+    function getProbabilidadTrampa() {
+        const tiempoIntroduccion = 10; // Las trampas aparecen a partir del segundo 10
+        const tiempoMaximo = 45;      // Alcanza la probabilidad máxima a los 45 segundos
+        const maxProbTrampa = 0.4;    // Máximo 40% de probabilidad de ser trampa
+
+        if (tiempo < tiempoIntroduccion) {
+            return 0; // Nivel 1: 0% de trampas
+        }
+        if (tiempo >= tiempoMaximo) {
+            return maxProbTrampa; // Nivel Máximo: 40% de trampas
+        }
+        
+        // Calcular la probabilidad entre 10s y 45s (0% a 40%)
+        const tiempoProgresion = tiempo - tiempoIntroduccion;
+        const duracionProgresion = tiempoMaximo - tiempoIntroduccion;
+        
+        return maxProbTrampa * (tiempoProgresion / duracionProgresion);
+    }
+
     // --- Funciones del Juego ---
 
     function iniciarTimer() {
@@ -37,7 +85,13 @@
         }, 1000);
     }
 
+    //modifiqué para agregar la imagen de la canasta -k
     function dibujarCanasta() {
+        if (imgCanasta && imgCanasta.complete) {
+            // Dibuja la imagen de la canasta
+            // Posición: Usamos HEIGHT - CANASTA_H para que el fondo sea la línea del suelo
+            ctx.drawImage(imgCanasta, canastaX, HEIGHT - CANASTA_H, CANASTA_W, CANASTA_H);
+        } else {
         ctx.fillStyle = 'blue';
         // Semicírculo (Arco: empieza en 0 grados (derecha), termina en Math.PI (izquierda))
         ctx.beginPath();
@@ -45,32 +99,55 @@
         ctx.lineTo(canastaX + CANASTA_W, HEIGHT);
         ctx.lineTo(canastaX, HEIGHT);
         ctx.fill();
+        }
     }
 
+    //otra modificacion para agregar las imagenes de las frutas -k
     function dibujarItem(item) {
-        ctx.fillStyle = item.tipo === 'fruta' ? 'red' : 'black';
-        ctx.beginPath();
-        ctx.arc(item.x, item.y, FRUTA_R, 0, Math.PI * 2);
-        ctx.fill();
+        let img;
+        if (item.tipo === 'fruta') {
+            img = imgManzanaBuena; // Manzana buena (roja original)
+        } else {
+            img = imgManzanaPodrida; // Manzana podrida (negra original)
+        }
+        
+        // El tamaño de la fruta 
+        const size = FRUTA_R * 2;
+        const x_pos = item.x - FRUTA_R; // Ajusta a la esquina superior izquierda
+        const y_pos = item.y - FRUTA_R;
+        
+        if (img && img.complete) {
+            ctx.drawImage(img, x_pos, y_pos, size, size);
+        } else {
+            // dibujar círculo si la imagen no está lista)
+            ctx.fillStyle = item.tipo === 'fruta' ? 'red' : 'black';
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, FRUTA_R, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     function generarItem() {
-        const tipo = Math.random() < 0.7 ? 'fruta' : 'trampa'; // 70% fruta, 30% trampa
+        // Usamos la nueva función para determinar la probabilidad de trampa
+        const probTrampa = getProbabilidadTrampa();
+        
+        // El ítem es trampa si el número aleatorio es menor que la probabilidad calculada
+        const tipo = Math.random() < probTrampa ? 'trampa' : 'fruta';
         items.push({
             x: Math.random() * (WIDTH - FRUTA_R * 2) + FRUTA_R,
             y: -FRUTA_R,
             tipo: tipo,
-            velocidad: Math.random() * 1 + 1 // Velocidad de caída
+            velocidad: Math.random() * (1 + tiempo / 45) + 1 // Velocidad de caída
         });
     }
 
     function actualizarJuego() {
         if (pausa) return;
 
-        // 1. Limpiar Canvas
+        // Limpiar Canvas
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-        // 2. Mover Items y Colisiones
+        // Mover Items y Colisiones
         items = items.filter(item => {
             item.y += item.velocidad;
 
@@ -90,7 +167,7 @@
                 }
             }
             
-            // Si el item cae fuera (lo pierdes), también se elimina
+            // Si el item cae fuera también se elimina
             if (item.y > HEIGHT + FRUTA_R) {
                 // Podríamos penalizar si pierdes una fruta, o no hacer nada si pierdes una trampa.
                 return false;
@@ -99,16 +176,18 @@
             return true;
         });
 
-        // 3. Dibujar
+        // Dibujar
         dibujarCanasta();
         items.forEach(dibujarItem);
 
-        // 4. Generar nuevo item de forma periódica (cada 60 frames)
-        if (tiempo % 1 === 0 && Math.random() < 0.1) {
+        // Generar nuevo item de forma periódica AHORA BASADO EN LA DIFICULTAD!
+        const probAparicion = getProbabilidadAparicion();
+
+        if (Math.random() < probAparicion) {
             generarItem();
         }
 
-        // 5. Loop
+        // Loop
         animacionFrame = requestAnimationFrame(actualizarJuego);
     }
 
@@ -152,6 +231,33 @@
         }
     }
 
+    async function cargarImagenes() {
+        // Promesa para esperar a que todas las imágenes carguen
+        return new Promise(resolve => {
+            let loadedCount = 0;
+            const totalImages = 3;
+
+            const onImageLoad = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    resolve();
+                }
+            };
+            
+            imgCanasta = new Image();
+            imgCanasta.onload = onImageLoad;
+            imgCanasta.src = RUTA_CANASTA;
+
+            imgManzanaBuena = new Image();
+            imgManzanaBuena.onload = onImageLoad;
+            imgManzanaBuena.src = RUTA_MANZANA_BUENA;
+
+            imgManzanaPodrida = new Image();
+            imgManzanaPodrida.onload = onImageLoad;
+            imgManzanaPodrida.src = RUTA_MANZANA_PODRIDA;
+        });
+    }
+
     async function regresarAlMenu() {
         // 1. Detener el juego
         cancelAnimationFrame(animacionFrame);
@@ -182,6 +288,7 @@
     }
 
     // --- Ciclo de Vida Svelte ---
+<<<<<<< HEAD
         onMount(() => {
             ctx = canvas.getContext('2d');
             iniciarTimer();
@@ -189,6 +296,16 @@
             
             // Listener del TECLADO
             window.addEventListener('keydown', manejarMovimiento); 
+=======
+    onMount(() => {
+        ctx = canvas.getContext('2d');
+        // ESPERAR A QUE LAS IMÁGENES CARGUEN ANTES DE INICIAR EL JUEGO
+        cargarImagenes();
+        iniciarTimer();
+        actualizarJuego();
+        window.addEventListener('keydown', manejarMovimiento);
+    });
+>>>>>>> a92b4261986186e64779c526b88e0ca301e19f4f
 
             // Listener del MOUSE
             canvas.addEventListener('mousemove', manejarMovimientoMouse);
