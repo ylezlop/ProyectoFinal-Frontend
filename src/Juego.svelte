@@ -112,7 +112,6 @@
         animacionFrame = requestAnimationFrame(actualizarJuego);
     }
 
-    // --- Control de Teclado (Canasta) ---
     function manejarMovimiento(e) {
         if (pausa) return;
         if (e.key === 'ArrowLeft' || e.key === 'a') {
@@ -121,6 +120,24 @@
             canastaX = Math.min(WIDTH - CANASTA_W, canastaX + 15);
         }
     }
+
+    // --- Control de Teclado (Canasta) ---
+        function manejarMovimientoMouse(e) {
+            if (pausa) return;
+
+            // Obtiene la posición del canvas con respecto a la ventana
+            const rect = canvas.getBoundingClientRect();
+            
+            // Calcula la posición X del mouse relativa al canvas
+            // e.clientX es la posición del mouse en la ventana
+            const mouseX = e.clientX - rect.left;
+
+            // Centra la canasta alrededor de la posición del mouse
+            canastaX = Math.min(
+                WIDTH - CANASTA_W,
+                Math.max(0, mouseX - CANASTA_W / 2)
+            );
+        }
 
     // --- Control de Pausa y Salida ---
 
@@ -165,18 +182,28 @@
     }
 
     // --- Ciclo de Vida Svelte ---
-    onMount(() => {
-        ctx = canvas.getContext('2d');
-        iniciarTimer();
-        actualizarJuego();
-        window.addEventListener('keydown', manejarMovimiento);
-    });
+        onMount(() => {
+            ctx = canvas.getContext('2d');
+            iniciarTimer();
+            actualizarJuego();
+            
+            // Listener del TECLADO
+            window.addEventListener('keydown', manejarMovimiento); 
 
-    onDestroy(() => {
-        cancelAnimationFrame(animacionFrame);
-        clearInterval(timerInterval);
-        window.removeEventListener('keydown', manejarMovimiento);
-    });
+            // Listener del MOUSE
+            canvas.addEventListener('mousemove', manejarMovimientoMouse);
+        });
+
+        onDestroy(() => {
+            cancelAnimationFrame(animacionFrame);
+            clearInterval(timerInterval);
+            
+            // Remueve listeners al salir
+            window.removeEventListener('keydown', manejarMovimiento);
+            
+            // NUEVO: Remueve listener del MOUSE
+            canvas.removeEventListener('mousemove', manejarMovimientoMouse);
+        });
 
 </script>
 

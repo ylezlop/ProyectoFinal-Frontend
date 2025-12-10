@@ -34,7 +34,7 @@
 </main>
 
 <style>
-    /* Estilos básicos para cenntrar el juego */
+    /* Estilos para cenntrar el juego */
     main {
         text-align: center;
         padding: 1em;
