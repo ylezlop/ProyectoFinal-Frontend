@@ -21,4 +21,4 @@ export const sonidoActivo = writable(true);
 // IMPORTANTE
 // Variable para la URL de tu backend en Railway (actualizar después del despliegue)
 // Cuando uses Railway, actualiza esto: export const BACKEND_URL = 'https://[TU-URL-RAILWAY]';
-export const BACKEND_URL = 'proyectofinal-backend-production-91d7.up.railway.app';
+export const BACKEND_URL = 'https://proyectofinal-backend-production-91d7.up.railway.app/';

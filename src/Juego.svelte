@@ -2,7 +2,6 @@
     import { VISTAS, vistaActual, jugadorActivo, sonidoActivo, BACKEND_URL } from './estado.js';
     import { onMount, onDestroy } from 'svelte';
 
-
     // rutas imagenes
     const RUTA_MANZANA_BUENA = '/manzana-roja.png'; 
     const RUTA_MANZANA_PODRIDA = '/manzana.png';
@@ -57,8 +56,8 @@
     // probabilidad de que el ítem sea una trampa (manzana podrida)
     function getProbabilidadTrampa() {
         const tiempoIntroduccion = 10; // Las trampas aparecen a partir del segundo 10
-        const tiempoMaximo = 45;      // Alcanza la probabilidad máxima a los 45 segundos
-        const maxProbTrampa = 0.4;    // Máximo 40% de probabilidad de ser trampa
+        const tiempoMaximo = 45;      // Alcanza la probabilidad máxima a los 45 segundos
+        const maxProbTrampa = 0.4;    // Máximo 40% de probabilidad de ser trampa
 
         if (tiempo < tiempoIntroduccion) {
             return 0; // Nivel 1: 0% de trampas
@@ -191,6 +190,7 @@
         animacionFrame = requestAnimationFrame(actualizarJuego);
     }
 
+    // --- Control de Movimiento (Teclado y Mouse) ---
     function manejarMovimiento(e) {
         if (pausa) return;
         if (e.key === 'ArrowLeft' || e.key === 'a') {
@@ -200,23 +200,21 @@
         }
     }
 
-    // --- Control de Teclado (Canasta) ---
-        function manejarMovimientoMouse(e) {
-            if (pausa) return;
+    function manejarMovimientoMouse(e) {
+        if (pausa) return;
 
-            // Obtiene la posición del canvas con respecto a la ventana
-            const rect = canvas.getBoundingClientRect();
-            
-            // Calcula la posición X del mouse relativa al canvas
-            // e.clientX es la posición del mouse en la ventana
-            const mouseX = e.clientX - rect.left;
+        // Obtiene la posición del canvas con respecto a la ventana
+        const rect = canvas.getBoundingClientRect();
+        
+        // Calcula la posición X del mouse relativa al canvas
+        const mouseX = e.clientX - rect.left;
 
-            // Centra la canasta alrededor de la posición del mouse
-            canastaX = Math.min(
-                WIDTH - CANASTA_W,
-                Math.max(0, mouseX - CANASTA_W / 2)
-            );
-        }
+        // Centra la canasta alrededor de la posición del mouse
+        canastaX = Math.min(
+            WIDTH - CANASTA_W,
+            Math.max(0, mouseX - CANASTA_W / 2)
+        );
+    }
 
     // --- Control de Pausa y Salida ---
 
@@ -287,95 +285,29 @@
         vistaActual.set(VISTAS.MENU);
     }
 
-    // --- Ciclo de Vida Svelte ---
-<<<<<<< HEAD
-        onMount(() => {
-            ctx = canvas.getContext('2d');
-            iniciarTimer();
-            actualizarJuego();
-            
-            // Listener del TECLADO
-            window.addEventListener('keydown', manejarMovimiento); 
-=======
-    onMount(() => {
+    // --- Ciclo de Vida Svelte (Conflicto Resuelto y Carga de Imágenes) ---
+    onMount(async () => {
         ctx = canvas.getContext('2d');
-        // ESPERAR A QUE LAS IMÁGENES CARGUEN ANTES DE INICIAR EL JUEGO
-        cargarImagenes();
+        
+        // 1. ESPERA A QUE LAS IMÁGENES CARGUEN ANTES DE INICIAR EL JUEGO
+        await cargarImagenes(); 
+        
+        // 2. INICIA LA LÓGICA DEL JUEGO
         iniciarTimer();
-        actualizarJuego();
-        window.addEventListener('keydown', manejarMovimiento);
+        actualizarJuego(); // Inicia el loop del juego
+
+        // 3. AGREGA LISTENERS
+        window.addEventListener('keydown', manejarMovimiento); 
+        canvas.addEventListener('mousemove', manejarMovimientoMouse);
     });
->>>>>>> a92b4261986186e64779c526b88e0ca301e19f4f
 
-            // Listener del MOUSE
-            canvas.addEventListener('mousemove', manejarMovimientoMouse);
-        });
-
-        onDestroy(() => {
-            cancelAnimationFrame(animacionFrame);
-            clearInterval(timerInterval);
-            
-            // Remueve listeners al salir
-            window.removeEventListener('keydown', manejarMovimiento);
-            
-            // NUEVO: Remueve listener del MOUSE
-            canvas.removeEventListener('mousemove', manejarMovimientoMouse);
-        });
+    onDestroy(() => {
+        cancelAnimationFrame(animacionFrame);
+        clearInterval(timerInterval);
+        
+        // Remueve listeners al salir
+        window.removeEventListener('keydown', manejarMovimiento);
+        canvas.removeEventListener('mousemove', manejarMovimientoMouse);
+    });
 
 </script>
-
-<div>
-    <h2>🕹️ Game On!</h2>
-    <p>
-        Puntuación: <strong>{puntuacion}</strong> | 
-        Tiempo: <strong>{tiempo}s</strong> | 
-        Mejor Récord: <strong>{jugador ? jugador.maxPuntuacion : 'N/A'}</strong>
-    </p>
-
-    <div class="canvas-container">
-        <canvas bind:this={canvas} width={WIDTH} height={HEIGHT}></canvas>
-        {#if pausa}
-            <div class="pausa-overlay">
-                <h3>Juego Pausado</h3>
-                <button on:click={togglePausa}>Reanudar</button>
-                <button on:click={regresarAlMenu}>Regresar al Menú Principal</button>
-            </div>
-        {/if}
-    </div>
-
-    <button on:click={togglePausa}>{pausa ? 'Reanudar' : 'Pausar'}</button>
-    
-    {#if !pausa}
-        <p class="instrucciones">Usa ← y → (o A y D) para mover la canasta.</p>
-    {/if}
-</div>
-
-<style>
-    .canvas-container {
-        position: relative;
-        display: inline-block;
-        box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-    canvas {
-        background-color: #aaf; /* Cielo */
-        display: block;
-    }
-    .pausa-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        color: white;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 10;
-    }
-    .pausa-overlay button {
-        margin: 10px;
-        padding: 10px 30px;
-    }
-</style>
