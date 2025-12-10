@@ -1,47 +1,50 @@
 <script>
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from '/vite.svg'
-  import Counter from './lib/Counter.svelte'
+    import MenuPrincipal from './Menu.svelte';
+    import Login from './Login.svelte';
+    import Juego from './Juego.svelte';
+    import Configuracion from './Configuracion.svelte';
+    import { VISTAS, vistaActual, jugadorActivo} from './estado.js';
+    
+    // Variables locales para suscribirse a los stores
+    let vista;
+    vistaActual.subscribe(v => { vista = v; });
+
+    let jugador;
+    jugadorActivo.subscribe(j => { jugador = j; });
+
 </script>
 
 <main>
-  <div>
-    <a href="https://vite.dev" target="_blank" rel="noreferrer">
-      <img src={viteLogo} class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
-  </div>
-  <h1>Vite + Svelte</h1>
+    <div class="header">
+        <h1>Apple & Basket</h1>
+        {#if jugador}
+            <p>Jugador: <strong>{jugador.usuario}</strong> | Récord: {jugador.maxPuntuacion}</p>
+        {/if}
+    </div>
 
-  <div class="card">
-    <Counter />
-  </div>
-
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
-
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
+    {#if vista === VISTAS.MENU}
+        <MenuPrincipal />
+    {:else if vista === VISTAS.LOGIN}
+        <Login />
+    {:else if vista === VISTAS.JUEGO}
+        <Juego />
+    {:else if vista === VISTAS.CONFIG}
+        <Configuracion />
+    {/if}
 </main>
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  }
+    /* Estilos básicos para cenntrar el juego */
+    main {
+        text-align: center;
+        padding: 1em;
+        max-width: 800px;
+        margin: 0 auto;
+        font-family: sans-serif;
+    }
+    .header {
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+    }
 </style>
