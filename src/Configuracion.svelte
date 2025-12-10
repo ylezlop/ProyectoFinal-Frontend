@@ -31,7 +31,7 @@
             const exito = await response.json(); // Esperamos true/false del backend
 
             if (response.ok && exito === true) {
-                mensajeEliminar = '✅ Cuenta eliminada con éxito. Regresando al menú.';
+                mensajeEliminar = 'Cuenta eliminada con éxito. Regresando al menú.';
                 jugadorActivo.set(null); // Desloguear
                 setTimeout(() => vistaActual.set(VISTAS.MENU), 2000);
             } else {

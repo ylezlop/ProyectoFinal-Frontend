@@ -2,6 +2,17 @@
     import { VISTAS, vistaActual, jugadorActivo, sonidoActivo, BACKEND_URL } from './estado.js';
     import { onMount, onDestroy } from 'svelte';
 
+
+    // rutas imagenes
+    const RUTA_MANZANA_BUENA = '/manzana-roja.png'; 
+    const RUTA_MANZANA_PODRIDA = '/manzana.png';
+    const RUTA_CANASTA = '/canasta.png'; 
+    
+    // Objetos Image para Canvas
+    let imgCanasta;
+    let imgManzanaBuena;
+    let imgManzanaPodrida;
+
     // Variables de estado del juego
     let puntuacion = 0;
     let tiempo = 0;
@@ -37,7 +48,13 @@
         }, 1000);
     }
 
+    //modifiqué para agregar la imagen de la canasta -k
     function dibujarCanasta() {
+        if (imgCanasta && imgCanasta.complete) {
+            // Dibuja la imagen de la canasta
+            // Posición: Usamos HEIGHT - CANASTA_H para que el fondo sea la línea del suelo
+            ctx.drawImage(imgCanasta, canastaX, HEIGHT - CANASTA_H, CANASTA_W, CANASTA_H);
+        } else {
         ctx.fillStyle = 'blue';
         // Semicírculo (Arco: empieza en 0 grados (derecha), termina en Math.PI (izquierda))
         ctx.beginPath();
@@ -45,13 +62,32 @@
         ctx.lineTo(canastaX + CANASTA_W, HEIGHT);
         ctx.lineTo(canastaX, HEIGHT);
         ctx.fill();
+        }
     }
 
+    //otra modificacion para agregar las imagenes de las frutas -k
     function dibujarItem(item) {
-        ctx.fillStyle = item.tipo === 'fruta' ? 'red' : 'black';
-        ctx.beginPath();
-        ctx.arc(item.x, item.y, FRUTA_R, 0, Math.PI * 2);
-        ctx.fill();
+        let img;
+        if (item.tipo === 'fruta') {
+            img = imgManzanaBuena; // Manzana buena (roja original)
+        } else {
+            img = imgManzanaPodrida; // Manzana podrida (negra original)
+        }
+        
+        // El tamaño de la fruta 
+        const size = FRUTA_R * 2;
+        const x_pos = item.x - FRUTA_R; // Ajusta a la esquina superior izquierda
+        const y_pos = item.y - FRUTA_R;
+        
+        if (img && img.complete) {
+            ctx.drawImage(img, x_pos, y_pos, size, size);
+        } else {
+            // dibujar círculo si la imagen no está lista)
+            ctx.fillStyle = item.tipo === 'fruta' ? 'red' : 'black';
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, FRUTA_R, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     function generarItem() {
@@ -135,6 +171,33 @@
         }
     }
 
+    async function cargarImagenes() {
+        // Promesa para esperar a que todas las imágenes carguen
+        return new Promise(resolve => {
+            let loadedCount = 0;
+            const totalImages = 3;
+
+            const onImageLoad = () => {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    resolve();
+                }
+            };
+            
+            imgCanasta = new Image();
+            imgCanasta.onload = onImageLoad;
+            imgCanasta.src = RUTA_CANASTA;
+
+            imgManzanaBuena = new Image();
+            imgManzanaBuena.onload = onImageLoad;
+            imgManzanaBuena.src = RUTA_MANZANA_BUENA;
+
+            imgManzanaPodrida = new Image();
+            imgManzanaPodrida.onload = onImageLoad;
+            imgManzanaPodrida.src = RUTA_MANZANA_PODRIDA;
+        });
+    }
+
     async function regresarAlMenu() {
         // 1. Detener el juego
         cancelAnimationFrame(animacionFrame);
@@ -167,6 +230,8 @@
     // --- Ciclo de Vida Svelte ---
     onMount(() => {
         ctx = canvas.getContext('2d');
+        // ESPERAR A QUE LAS IMÁGENES CARGUEN ANTES DE INICIAR EL JUEGO
+        cargarImagenes();
         iniciarTimer();
         actualizarJuego();
         window.addEventListener('keydown', manejarMovimiento);
