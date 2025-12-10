@@ -37,6 +37,43 @@
     let items = [];
     let timerInterval;
 
+    // modificaciones para implementar niveles -k
+
+    // probabilidad de que aparezca un ítem en un fotograma dado.
+    // Base 0.05 (5%) y sube hasta 0.2 (20%).
+    function getProbabilidadAparicion() {
+        // La dificultad máxima se alcanza después de 90 segundos
+        const maxTiempo = 90; 
+        const minProb = 0.005; // Al inicio, solo 0.5% de probabilidad por frame
+        const maxProb = 0.05; // Máximo 5% de probabilidad por frame 
+
+        if (tiempo >= maxTiempo) {
+            return maxProb;
+        }
+        
+        return minProb + (maxProb - minProb) * (tiempo / maxTiempo);
+    }
+    
+    // probabilidad de que el ítem sea una trampa (manzana podrida)
+    function getProbabilidadTrampa() {
+        const tiempoIntroduccion = 10; // Las trampas aparecen a partir del segundo 10
+        const tiempoMaximo = 45;      // Alcanza la probabilidad máxima a los 45 segundos
+        const maxProbTrampa = 0.4;    // Máximo 40% de probabilidad de ser trampa
+
+        if (tiempo < tiempoIntroduccion) {
+            return 0; // Nivel 1: 0% de trampas
+        }
+        if (tiempo >= tiempoMaximo) {
+            return maxProbTrampa; // Nivel Máximo: 40% de trampas
+        }
+        
+        // Calcular la probabilidad entre 10s y 45s (0% a 40%)
+        const tiempoProgresion = tiempo - tiempoIntroduccion;
+        const duracionProgresion = tiempoMaximo - tiempoIntroduccion;
+        
+        return maxProbTrampa * (tiempoProgresion / duracionProgresion);
+    }
+
     // --- Funciones del Juego ---
 
     function iniciarTimer() {
@@ -91,22 +128,26 @@
     }
 
     function generarItem() {
-        const tipo = Math.random() < 0.7 ? 'fruta' : 'trampa'; // 70% fruta, 30% trampa
+        // Usamos la nueva función para determinar la probabilidad de trampa
+        const probTrampa = getProbabilidadTrampa();
+        
+        // El ítem es trampa si el número aleatorio es menor que la probabilidad calculada
+        const tipo = Math.random() < probTrampa ? 'trampa' : 'fruta';
         items.push({
             x: Math.random() * (WIDTH - FRUTA_R * 2) + FRUTA_R,
             y: -FRUTA_R,
             tipo: tipo,
-            velocidad: Math.random() * 1 + 1 // Velocidad de caída
+            velocidad: Math.random() * (1 + tiempo / 45) + 1 // Velocidad de caída
         });
     }
 
     function actualizarJuego() {
         if (pausa) return;
 
-        // 1. Limpiar Canvas
+        // Limpiar Canvas
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-        // 2. Mover Items y Colisiones
+        // Mover Items y Colisiones
         items = items.filter(item => {
             item.y += item.velocidad;
 
@@ -126,7 +167,7 @@
                 }
             }
             
-            // Si el item cae fuera (lo pierdes), también se elimina
+            // Si el item cae fuera también se elimina
             if (item.y > HEIGHT + FRUTA_R) {
                 // Podríamos penalizar si pierdes una fruta, o no hacer nada si pierdes una trampa.
                 return false;
@@ -135,16 +176,18 @@
             return true;
         });
 
-        // 3. Dibujar
+        // Dibujar
         dibujarCanasta();
         items.forEach(dibujarItem);
 
-        // 4. Generar nuevo item de forma periódica (cada 60 frames)
-        if (tiempo % 1 === 0 && Math.random() < 0.1) {
+        // Generar nuevo item de forma periódica AHORA BASADO EN LA DIFICULTAD!
+        const probAparicion = getProbabilidadAparicion();
+
+        if (Math.random() < probAparicion) {
             generarItem();
         }
 
-        // 5. Loop
+        // Loop
         animacionFrame = requestAnimationFrame(actualizarJuego);
     }
 
