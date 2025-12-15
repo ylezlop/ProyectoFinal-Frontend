@@ -77,6 +77,6 @@
 
     h2 {
         margin-bottom: 1.5rem;
-        color: #e94560; /* Usamos el color de acento del tema */
+        color: #e94560; /* Usamos el color de acento del tema. */
     }
 </style>

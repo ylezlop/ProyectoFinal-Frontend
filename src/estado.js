@@ -11,7 +11,7 @@ export const VISTAS = {
 // Estado para controlar la vista actual
 export const vistaActual = writable(VISTAS.MENU);
 
-// Estado del jugador loggeado (su id, nombre de usuario y su puntuación máxima)
+// Estado del jugador loggeado (su id, nombre de usuario y su puntuación máxima).
 export const jugadorActivo = writable(null);
 
 // Estado de la configuración del juego

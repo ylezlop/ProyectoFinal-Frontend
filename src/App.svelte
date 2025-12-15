@@ -6,7 +6,7 @@
     import Configuracion from './Configuracion.svelte';
     import { VISTAS, vistaActual, jugadorActivo} from './estado.js';
     
-    // Variables locales para suscribirse a los stores
+    // Variables locales para suscribirse a los stores.
     let vista;
     vistaActual.subscribe(v => { vista = v; });
 

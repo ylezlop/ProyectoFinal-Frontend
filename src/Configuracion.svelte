@@ -6,7 +6,7 @@
     let passwordEliminar = '';
     let mensajeEliminar = '';
 
-    // Suscripción al store para el checkbox de sonido
+    // Suscripción al store para el checkbox de sonido.
     let sonido;
     sonidoActivo.subscribe(v => { sonido = v; });
 

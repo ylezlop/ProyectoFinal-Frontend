@@ -339,7 +339,7 @@ function manejarMovimiento(e) {
             return;
         }
     
-        // Detiene la reproducción si ya está sonando para q no se trabe
+        // Detiene la reproducción si ya está sonando para q no se trabe.
         audio.pause(); 
         audio.currentTime = 0; 
     

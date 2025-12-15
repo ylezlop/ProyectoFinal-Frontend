@@ -26,7 +26,7 @@
             } else {
                 vistaActual.set(VISTAS.LOGIN);
             }
-        })(); // El () final ejecuta la suscripción inmediatamente
+        })(); // El () final ejecuta la suscripción inmediatamente.
     }
 </script>
 
