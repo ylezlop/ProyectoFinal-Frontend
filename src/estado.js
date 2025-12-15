@@ -17,7 +17,5 @@ export const jugadorActivo = writable(null);
 // Estado de la configuración del juego
 export const sonidoActivo = writable(true);
 
-// IMPORTANTE
-// Variable para la URL del backend en Railway (actualizar después del despliegue)
-// Cuando cambiemos a Railway, actualizar esto: export const BACKEND_URL = 'https://proyectofinal-backend-production-91d7.up.railway.app/';
-export const BACKEND_URL = 'http://localhost:8080';
+// Variable para la URL de tu backend en Railway
+export const BACKEND_URL = 'https://proyectofinal-backend-production-91d7.up.railway.app';
