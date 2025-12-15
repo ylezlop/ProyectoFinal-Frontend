@@ -1,4 +1,5 @@
 <script>
+    // Importamos los componentes necesarios
     import MenuPrincipal from './Menu.svelte';
     import Login from './Login.svelte';
     import Juego from './Juego.svelte';
@@ -16,7 +17,7 @@
 
 <main>
     <div class="header">
-        <h1>Apple & Basket</h1>
+        <h1>Apple & Basket</h1> <!-- Título del juego (nos quedamos sin ideas :c)-->
         {#if jugador}
             <p>Jugador: <strong>{jugador.usuario}</strong> | Récord: {jugador.maxPuntuacion}</p>
         {/if}

@@ -2,6 +2,14 @@
     import { VISTAS, vistaActual, jugadorActivo, sonidoActivo, BACKEND_URL } from './estado.js';
     import { onMount, onDestroy } from 'svelte';
 
+    // Rutas de Sonido
+    const RUTA_SONIDO_PUNTO = '/Sonido_Puntoo.mp3';
+    const RUTA_SONIDO_ERROR = '/Sonido_Error.mp3';
+
+    // Objetos Audio
+    let audioPunto;
+    let audioError;
+
     // rutas imagenes
     const RUTA_MANZANA_BUENA = '/manzana-roja.png'; 
     const RUTA_MANZANA_PODRIDA = '/manzana.png';
@@ -39,7 +47,6 @@
     // modificaciones para implementar niveles -k
 
     // probabilidad de que aparezca un ítem en un fotograma dado.
-    // Base 0.05 (5%) y sube hasta 0.2 (20%).
     function getProbabilidadAparicion() {
         // La dificultad máxima se alcanza después de 90 segundos
         const maxTiempo = 90; 
@@ -105,9 +112,9 @@
     function dibujarItem(item) {
         let img;
         if (item.tipo === 'fruta') {
-            img = imgManzanaBuena; // Manzana buena (roja original)
+            img = imgManzanaBuena; // Manzana buena (roja)
         } else {
-            img = imgManzanaPodrida; // Manzana podrida (negra original)
+            img = imgManzanaPodrida; // Manzana podrida (negra)
         }
         
         // El tamaño de la fruta 
@@ -127,7 +134,7 @@
     }
 
     function generarItem() {
-        // Usamos la nueva función para determinar la probabilidad de trampa
+        // Usamos la función para determinar la probabilidad de trampa
         const probTrampa = getProbabilidadTrampa();
         
         // El ítem es trampa si el número aleatorio es menor que la probabilidad calculada
@@ -150,25 +157,24 @@
         items = items.filter(item => {
             item.y += item.velocidad;
 
-            // Colisión con la Canasta (zona semicírculo)
+            // Colisión con la Canasta (la zona semicírculo)
             if (item.y > HEIGHT - 20 - FRUTA_R && item.y < HEIGHT) {
                 const distanciaX = item.x - (canastaX + CANASTA_W / 2);
                 if (Math.abs(distanciaX) < CANASTA_W / 2) {
                     
                     if (item.tipo === 'fruta') {
                         puntuacion += 10;
-                        if ($sonidoActivo) { /* Tocar sonido de punto */ }
+                        reproducirSonido(audioPunto); { /* sonido de punto :D*/ }
                     } else {
                         puntuacion = Math.max(0, puntuacion - 20); // Penalización
-                        if ($sonidoActivo) { /* Tocar sonido de error */ }
+                        reproducirSonido(audioError); { /* sonido de error :( */ }
                     }
-                    return false; // Elimina el item atrapado
+                    return false;  /* deasaparece la manzana pq entró en la canasta */
                 }
             }
             
-            // Si el item cae fuera también se elimina
+            // Si el item cae fuera también se elimina 👍🏻
             if (item.y > HEIGHT + FRUTA_R) {
-                // Podríamos penalizar si pierdes una fruta, o no hacer nada si pierdes una trampa.
                 return false;
             }
 
@@ -179,27 +185,38 @@
         dibujarCanasta();
         items.forEach(dibujarItem);
 
-        // Generar nuevo item de forma periódica AHORA BASADO EN LA DIFICULTAD!
+        // Genera un nuevo item de forma periódica basado en la dificultad
         const probAparicion = getProbabilidadAparicion();
 
         if (Math.random() < probAparicion) {
             generarItem();
         }
 
-        // Loop
+        // Loop :p
         animacionFrame = requestAnimationFrame(actualizarJuego);
     }
 
-    // --- Control de Movimiento (Teclado y Mouse) ---
-    function manejarMovimiento(e) {
-        if (pausa) return;
-        if (e.key === 'ArrowLeft' || e.key === 'a') {
-            canastaX = Math.max(0, canastaX - 15);
-        } else if (e.key === 'ArrowRight' || e.key === 'd') {
-            canastaX = Math.min(WIDTH - CANASTA_W, canastaX + 15);
-        }
+    // --- Control de movimiento y pausa 
+function manejarMovimiento(e) {
+    
+    // Si ya está pausado Y la tecla no es la de Espacio, no hace nada.
+    if (pausa && e.key !== ' ') return;
+    
+    // Movimiento de canasta
+    if (e.key === 'ArrowLeft' || e.key === 'a') {
+        canastaX = Math.max(0, canastaX - 15);
+    } else if (e.key === 'ArrowRight' || e.key === 'd') {
+        canastaX = Math.min(WIDTH - CANASTA_W, canastaX + 15);
     }
+    
+    // Control de pausa con espacio/barra
+    if (e.key === ' ') { 
+        // Llama a la función de pausa
+        togglePausa();
+    }
+}
 
+    // --- Control de Movimiento pero con Mouse :D
     function manejarMovimientoMouse(e) {
         if (pausa) return;
 
@@ -216,7 +233,7 @@
         );
     }
 
-    // --- Control de Pausa y Salida ---
+    // --- Control de pausa y salida 
 
     function togglePausa() {
         pausa = !pausa;
@@ -257,11 +274,11 @@
     }
 
     async function regresarAlMenu() {
-        // 1. Detener el juego
+        // Detiene el juego
         cancelAnimationFrame(animacionFrame);
         clearInterval(timerInterval);
 
-        // 2. Guardar Puntuación (CRUD: UPDATE)
+        // Guarda la puntuación (CRUD: UPDATE :D)
         if (jugador && puntuacion > jugador.maxPuntuacion) {
             await fetch(`${BACKEND_URL}/puntaje`, {
                 method: 'POST',
@@ -275,28 +292,34 @@
             jugadorActivo.update(j => ({ ...j, maxPuntuacion: puntuacion }));
         }
 
-        // 3. Resetear el estado del juego (para nueva partida)
+        // Resetea el estado del juego (para una nueva partida)
         puntuacion = 0;
         tiempo = 0;
         items = [];
         pausa = false;
 
-        // 4. Regresar
+        // Regresa al menu
         vistaActual.set(VISTAS.MENU);
     }
 
-    // --- Ciclo de Vida Svelte (Conflicto Resuelto y Carga de Imágenes) ---
+
+    // --- Ciclo de vida Svelte
     onMount(async () => {
-        ctx = canvas.getContext('2d');
         
-        // 1. ESPERA A QUE LAS IMÁGENES CARGUEN ANTES DE INICIAR EL JUEGO
+        ctx = canvas.getContext('2d');
+
+        // Inicializar los objetos Audio
+        audioPunto = new Audio(RUTA_SONIDO_PUNTO);
+        audioError = new Audio(RUTA_SONIDO_ERROR);
+        
+        // espera a que las imágenes carguen
         await cargarImagenes(); 
         
-        // 2. INICIA LA LÓGICA DEL JUEGO
+        // inicia el juego
         iniciarTimer();
         actualizarJuego(); // Inicia el loop del juego
 
-        // 3. AGREGA LISTENERS
+        // agrega listeners de teclado y mouse
         window.addEventListener('keydown', manejarMovimiento); 
         canvas.addEventListener('mousemove', manejarMovimientoMouse);
     });
@@ -305,9 +328,106 @@
         cancelAnimationFrame(animacionFrame);
         clearInterval(timerInterval);
         
-        // Remueve listeners al salir
+        // remueve listeners
         window.removeEventListener('keydown', manejarMovimiento);
         canvas.removeEventListener('mousemove', manejarMovimientoMouse);
     });
 
+        // Función para reproducir los audios
+    function reproducirSonido(audio) {
+        if (!$sonidoActivo || !audio) { 
+            return;
+        }
+    
+        // Detiene la reproducción si ya está sonando para q no se trabe
+        audio.pause(); 
+        audio.currentTime = 0; 
+    
+        // Inicia la reproducción
+        audio.play().catch(e => {
+            // Manejo de error silencioso
+            console.warn("Error de reproducción de audio:", e.message);
+    });
+}
+
 </script>
+
+<main>
+    <div class="hud">
+        <span>🍎 Puntos: <strong>{puntuacion}</strong></span>
+        <span>⏳ Tiempo: <strong>{tiempo}s</strong></span>
+        <span>🏆 Récord: <strong>{jugador ? jugador.maxPuntuacion : 'N/A'}</strong></span>
+    </div>
+
+    <div class="canvas-container">
+        <canvas bind:this={canvas} width={WIDTH} height={HEIGHT}></canvas>
+        
+        {#if pausa}
+            <div class="pausa-overlay">
+                <h2>Juego en Pausa</h2>
+                <button on:click={togglePausa}>Reanudar</button>
+                <button on:click={regresarAlMenu}>Terminar Partida</button>
+            </div>
+        {/if}
+    </div>
+
+    <p class="instrucciones">
+        Usa las flechas ← → o el ratón para mover la canasta. Presiona la tecla 'Espacio' para pausar.
+    </p>
+</main>
+
+<style>
+    /* Estilos para que el contenedor del canvas se vea bonito */
+    .canvas-container {
+        position: relative;
+        display: inline-block;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Sombra fuerte para resaltar el juego */
+        border: 5px solid #2a2a2a; /* Borde grueso tipo maquinita arcade */
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+
+    canvas {
+        background-color: #87CEEB; /* Azul cielo, se ve más alegre :D */
+        display: block;
+        cursor: none; /* Escondo el mouse para que no estorbe */
+    }
+
+    /* Estilos para la barra de puntos y tiempo */
+    .hud {
+        display: flex;
+        justify-content: space-around; /* Separa los elementos equitativamente */
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .instrucciones {
+        margin-top: 15px;
+        opacity: 0.7; /* Texto un poco apagado para que no distraiga */
+        font-size: 0.9em;
+    }
+
+    /* Pantalla negra semitransparente cuando pausas */
+    .pausa-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        z-index: 10; /* Asegura que quede encima de todo */
+    }
+    
+    .pausa-overlay button {
+        margin: 10px;
+        width: 80%;
+    }
+</style>

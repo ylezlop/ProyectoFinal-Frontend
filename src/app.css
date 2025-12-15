@@ -1,25 +1,15 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Fuente estándar que se lee bien en todos lados */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+  
+  /* Paleta de colores: tema oscuro para que no lastime la vista */
+  --fondo-oscuro: #1a1a2e;
+  --fondo-claro: #16213e;
+  --acento: #0f3460;
+  --boton: #e94560; /* Un rojo rosado para que resalten los botones */
+  --texto: #ffffff;
 }
 
 body {
@@ -28,15 +18,10 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-.card {
-  padding: 2em;
+  background-color: var(--fondo-oscuro);
+  color: var(--texto);
+  /* Un degradado suave para que el fondo no sea plano y aburrido */
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
 }
 
 #app {
@@ -44,8 +29,10 @@ h1 {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  width: 100%;
 }
 
+/* --- Estilos de Botones --- */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -53,27 +40,39 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--boton);
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: transform 0.1s; /* Suaviza la animación */
+  margin: 5px;
+  /* Sombrita para darle profundidad */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button:hover {
+  filter: brightness(1.1); /* Se ilumina un poco al pasar el mouse */
+  transform: translateY(-2px); /* Efecto de "levantarse" */
+}
+
+button:active {
+  transform: translateY(0); /* Regresa a su lugar al hacer clic */
+}
+
+/* --- Inputs (Cajas de texto) --- */
+input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  width: 80%; 
+  max-width: 300px;
+  background-color: #eee; /* Fondo gris claro para que se note que es escribible */
+  color: #333;
+}
+
+h1 {
+  font-size: 3em;
+  /* Sombra al texto para que resalte del fondo */
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  margin-bottom: 0.5em;
 }

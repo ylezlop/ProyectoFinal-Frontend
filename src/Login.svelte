@@ -8,7 +8,7 @@
     async function handleSubmit() {
         mensaje = 'Procesando...';
         
-        // Validación mínima de la rúbrica
+        // Validación básica
         if (!usuario || !password) {
             mensaje = 'El usuario y la contraseña no pueden estar vacíos.';
             return;
@@ -24,11 +24,11 @@
             const data = await response.json();
 
             if (response.ok && data.usuario) {
-                // Login o Registro exitoso
+                // Login exitoso ^^
                 jugadorActivo.set(data);
                 vistaActual.set(VISTAS.JUEGO);
             } else if (!data) {
-                // Falló el login (contraseña incorrecta)
+                // Falló el login (contraseña incorrecta lol)
                 mensaje = 'Error de inicio de sesión: Contraseña incorrecta.';
             } else {
                 mensaje = 'Ocurrió un error desconocido.';
@@ -55,6 +55,28 @@
 </div>
 
 <style>
-    input { display: block; margin: 10px auto; padding: 10px; width: 80%; max-width: 300px; }
-    form button { margin-top: 20px; }
+    div {
+        /* Tarjeta centrada con fondo oscuro */
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 3rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        max-width: 400px;
+        margin: 0 auto; /* Importante para centrar */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        align-items: center; /* Centra los inputs y botones */
+    }
+
+    h2 {
+        margin-bottom: 1.5rem;
+        color: #e94560; /* Usamos el color de acento del tema */
+    }
 </style>

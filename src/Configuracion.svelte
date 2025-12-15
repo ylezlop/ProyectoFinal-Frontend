@@ -1,4 +1,5 @@
 <script>
+    // Importamos los stores necesarios
     import { VISTAS, vistaActual, jugadorActivo, sonidoActivo, BACKEND_URL } from './estado.js';
 
     let usuarioEliminar = '';
@@ -18,6 +19,7 @@
             return;
         }
 
+        // Llamada al backend para eliminar la cuenta
         try {
             const response = await fetch(`${BACKEND_URL}/borrar`, {
                 method: 'DELETE',
@@ -28,20 +30,22 @@
                 })
             });
 
+            // Esperamos true/false del backend
             const exito = await response.json(); // Esperamos true/false del backend
 
             if (response.ok && exito === true) {
-                mensajeEliminar = 'Cuenta eliminada con éxito. Regresando al menú.';
+                mensajeEliminar = 'Cuenta eliminada con éxito. Regresando al menú.'; // Nos contestó que sí :D
                 jugadorActivo.set(null); // Desloguear
                 setTimeout(() => vistaActual.set(VISTAS.MENU), 2000);
             } else {
-                mensajeEliminar = 'Error: Usuario o contraseña incorrectos.';
+                mensajeEliminar = 'Error: Usuario o contraseña incorrectos.'; // Se  equivocaron con el usuario o la contraseña xd
             }
         } catch (error) {
-            mensajeEliminar = 'Error de conexión con el servidor.';
+            mensajeEliminar = 'Error de conexión con el servidor.'; 
         }
     }
 </script>
+
 
 <div>
     <h2>Configuración</h2>
